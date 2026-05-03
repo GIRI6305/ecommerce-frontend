@@ -11,10 +11,34 @@ function CustomerDashboard({ token }) {
 
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
+  const loadCart = async () => {
+    try {
+      const res = await fetch('http://localhost:8081/api/cart', { headers });
+      const data = await res.json();
+      setCart(Array.isArray(data) ? data : []);
+    } catch { setCart([]); }
+  };
+
+  const loadOrders = async () => {
+    try {
+      const res = await fetch('http://localhost:8081/api/orders/my', { headers });
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch { setOrders([]); }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const res = await fetch('http://localhost:8081/api/products');
+      const data = await res.json();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch { setProducts([]); }
+  };
+
   useEffect(() => {
-    fetch('http://localhost:8081/api/products').then(r => r.json()).then(setProducts);
-    fetch('http://localhost:8081/api/cart', { headers }).then(r => r.json()).then(setCart);
-    fetch('http://localhost:8081/api/orders/my', { headers }).then(r => r.json()).then(setOrders);
+    loadProducts();
+    loadCart();
+    loadOrders();
   }, []);
 
   const addToCart = async (productId) => {
@@ -22,29 +46,37 @@ function CustomerDashboard({ token }) {
       method: 'POST', headers,
       body: JSON.stringify({ productId, quantity: 1 })
     });
-    const res = await fetch('http://localhost:8081/api/cart', { headers });
-    setCart(await res.json());
+    await loadCart();
     setMsg('Added to cart!');
     setTimeout(() => setMsg(''), 2000);
   };
 
   const removeFromCart = async (id) => {
     await fetch(`http://localhost:8081/api/cart/${id}`, { method: 'DELETE', headers });
-    const res = await fetch('http://localhost:8081/api/cart', { headers });
-    setCart(await res.json());
+    await loadCart();
   };
 
   const placeOrder = async () => {
     if (!address) { setMsg('Please enter shipping address'); return; }
-    await fetch('http://localhost:8081/api/orders/place', {
-      method: 'POST', headers,
-      body: JSON.stringify({ shippingAddress: address })
-    });
-    setCart([]);
-    setMsg('Order placed successfully!');
-    const res = await fetch('http://localhost:8081/api/orders/my', { headers });
-    setOrders(await res.json());
-    setTab('orders');
+    try {
+      const res = await fetch('http://localhost:8081/api/orders/place', {
+        method: 'POST', headers,
+        body: JSON.stringify({ shippingAddress: address })
+      });
+      const data = await res.json();
+      if (data.id) {
+        setMsg('Order placed successfully!');
+        setAddress('');
+        await loadCart();
+        await loadOrders();
+        setTab('orders');
+      } else {
+        setMsg('Order failed. Try again.');
+      }
+    } catch (err) {
+      setMsg('Error placing order: ' + err.message);
+    }
+    setTimeout(() => setMsg(''), 3000);
   };
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -55,7 +87,7 @@ function CustomerDashboard({ token }) {
       <div style={{ marginBottom: 20, display: 'flex', gap: 10 }}>
         <button onClick={() => setTab('shop')} style={tab === 'shop' ? activeTab : tabBtn}>🛍️ Shop ({products.length})</button>
         <button onClick={() => setTab('cart')} style={tab === 'cart' ? activeTab : tabBtn}>🛒 Cart ({cart.length})</button>
-        <button onClick={() => setTab('orders')} style={tab === 'orders' ? activeTab : tabBtn}>📦 My Orders ({orders.length})</button>
+        <button onClick={() => { setTab('orders'); loadOrders(); }} style={tab === 'orders' ? activeTab : tabBtn}>📦 My Orders ({orders.length})</button>
       </div>
 
       {msg && <p style={{ background: '#dcfce7', color: 'green', padding: 10, borderRadius: 8, marginBottom: 15 }}>{msg}</p>}
@@ -64,7 +96,7 @@ function CustomerDashboard({ token }) {
         <div>
           <input style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid #ddd', fontSize: 16, marginBottom: 20, boxSizing: 'border-box' }}
             placeholder="🔍 Search products..." value={search} onChange={e => setSearch(e.target.value)} />
-          {filtered.length === 0 && <p style={{ color: '#64748b', textAlign: 'center' }}>No products found. Ask admin to add products.</p>}
+          {filtered.length === 0 && <p style={{ color: '#64748b', textAlign: 'center' }}>No products found.</p>}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 20 }}>
             {filtered.map(p => (
               <div key={p.id} style={productCard}>

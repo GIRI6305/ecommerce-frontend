@@ -4,40 +4,57 @@ function AdminDashboard({ token }) {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [tab, setTab] = useState('products');
-  const [form, setForm] = useState({ name: '', description: '', price: '', stock: '', category: '', imageUrl: '' });
+  const [form, setForm] = useState({ name: '', description: '', price: '', stock: '', category: '' });
   const [msg, setMsg] = useState('');
 
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
+  const loadProducts = async () => {
+    try {
+      const res = await fetch('http://localhost:8081/api/products');
+      const data = await res.json();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch { setProducts([]); }
+  };
+
+  const loadOrders = async () => {
+    try {
+      const res = await fetch('http://localhost:8081/api/orders/admin/all', { headers });
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch { setOrders([]); }
+  };
+
   useEffect(() => {
-    fetch('http://localhost:8081/api/products').then(r => r.json()).then(setProducts);
-    fetch('http://localhost:8081/api/orders/admin/all', { headers }).then(r => r.json()).then(setOrders);
+    loadProducts();
+    loadOrders();
   }, []);
 
   const addProduct = async (e) => {
     e.preventDefault();
-    await fetch('http://localhost:8081/api/products/admin', {
-      method: 'POST', headers,
-      body: JSON.stringify({ ...form, price: parseFloat(form.price), stock: parseInt(form.stock) })
-    });
-    setMsg('Product added!');
-    setForm({ name: '', description: '', price: '', stock: '', category: '', imageUrl: '' });
-    const res = await fetch('http://localhost:8081/api/products');
-    setProducts(await res.json());
+    try {
+      await fetch('http://localhost:8081/api/products/admin', {
+        method: 'POST', headers,
+        body: JSON.stringify({ ...form, price: parseFloat(form.price), stock: parseInt(form.stock) })
+      });
+      setMsg('Product added successfully!');
+      setForm({ name: '', description: '', price: '', stock: '', category: '' });
+      await loadProducts();
+      setTab('products');
+    } catch { setMsg('Failed to add product.'); }
     setTimeout(() => setMsg(''), 2000);
   };
 
   const deleteProduct = async (id) => {
     await fetch(`http://localhost:8081/api/products/admin/${id}`, { method: 'DELETE', headers });
-    setProducts(products.filter(p => p.id !== id));
+    await loadProducts();
     setMsg('Product deleted!');
     setTimeout(() => setMsg(''), 2000);
   };
 
   const updateOrderStatus = async (id, status) => {
     await fetch(`http://localhost:8081/api/orders/admin/${id}/status?status=${status}`, { method: 'PUT', headers });
-    const res = await fetch('http://localhost:8081/api/orders/admin/all', { headers });
-    setOrders(await res.json());
+    await loadOrders();
     setMsg('Order status updated!');
     setTimeout(() => setMsg(''), 2000);
   };
@@ -53,9 +70,9 @@ function AdminDashboard({ token }) {
       </div>
 
       <div style={{ marginBottom: 20, display: 'flex', gap: 10 }}>
-        <button onClick={() => setTab('products')} style={tab === 'products' ? activeTab : tabBtn}>📦 Products</button>
+        <button onClick={() => setTab('products')} style={tab === 'products' ? activeTab : tabBtn}>📦 Products ({products.length})</button>
         <button onClick={() => setTab('add')} style={tab === 'add' ? activeTab : tabBtn}>➕ Add Product</button>
-        <button onClick={() => setTab('orders')} style={tab === 'orders' ? activeTab : tabBtn}>🧾 All Orders</button>
+        <button onClick={() => { setTab('orders'); loadOrders(); }} style={tab === 'orders' ? activeTab : tabBtn}>🧾 All Orders ({orders.length})</button>
       </div>
 
       {msg && <p style={{ background: '#dcfce7', color: 'green', padding: 10, borderRadius: 8, marginBottom: 15 }}>{msg}</p>}
@@ -85,7 +102,7 @@ function AdminDashboard({ token }) {
             <input style={inputStyle} placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required />
             <input style={inputStyle} type="number" placeholder="Price (₹)" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
             <input style={inputStyle} type="number" placeholder="Stock Quantity" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
-            <input style={inputStyle} placeholder="Category (e.g. Electronics, Clothing)" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} required />
+            <input style={inputStyle} placeholder="Category (Electronics, Clothing...)" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} required />
             <button style={submitBtn} type="submit">Add Product</button>
           </form>
         </div>
