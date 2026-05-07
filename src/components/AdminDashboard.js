@@ -11,7 +11,7 @@ function AdminDashboard({ token }) {
 
   const loadProducts = async () => {
     try {
-      const res = await fetch('http://localhost:8081/api/products');
+      const res = await fetch('https://ecommerce-platform-pyit.onrender.com/api/products');
       const data = await res.json();
       setProducts(Array.isArray(data) ? data : []);
     } catch { setProducts([]); }
@@ -19,7 +19,7 @@ function AdminDashboard({ token }) {
 
   const loadOrders = async () => {
     try {
-      const res = await fetch('http://localhost:8081/api/orders/admin/all', { headers });
+      const res = await fetch('https://ecommerce-platform-pyit.onrender.com/api/orders/admin/all', { headers });
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch { setOrders([]); }
@@ -33,7 +33,7 @@ function AdminDashboard({ token }) {
   const addProduct = async (e) => {
     e.preventDefault();
     try {
-      await fetch('http://localhost:8081/api/products/admin', {
+      await fetch('https://ecommerce-platform-pyit.onrender.com/api/products/admin', {
         method: 'POST', headers,
         body: JSON.stringify({ ...form, price: parseFloat(form.price), stock: parseInt(form.stock) })
       });
@@ -46,14 +46,14 @@ function AdminDashboard({ token }) {
   };
 
   const deleteProduct = async (id) => {
-    await fetch(`http://localhost:8081/api/products/admin/${id}`, { method: 'DELETE', headers });
+    await fetch(`https://ecommerce-platform-pyit.onrender.com/api/products/admin/${id}`, { method: 'DELETE', headers });
     await loadProducts();
     setMsg('Product deleted!');
     setTimeout(() => setMsg(''), 2000);
   };
 
   const updateOrderStatus = async (id, status) => {
-    await fetch(`http://localhost:8081/api/orders/admin/${id}/status?status=${status}`, { method: 'PUT', headers });
+    await fetch(`https://ecommerce-platform-pyit.onrender.com/api/orders/admin/${id}/status?status=${status}`, { method: 'PUT', headers });
     await loadOrders();
     setMsg('Order status updated!');
     setTimeout(() => setMsg(''), 2000);

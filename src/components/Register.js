@@ -12,7 +12,7 @@ function Register({ onRegister }) {
     setError('');
     setMsg('');
     try {
-      const response = await fetch('http://localhost:8081/api/auth/register', {
+      const response = await fetch('https://ecommerce-platform-pyit.onrender.com/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)

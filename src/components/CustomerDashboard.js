@@ -13,7 +13,7 @@ function CustomerDashboard({ token }) {
 
   const loadCart = async () => {
     try {
-      const res = await fetch('http://localhost:8081/api/cart', { headers });
+      const res = await fetch('https://ecommerce-platform-pyit.onrender.com/api/cart', { headers });
       const data = await res.json();
       setCart(Array.isArray(data) ? data : []);
     } catch { setCart([]); }
@@ -21,7 +21,7 @@ function CustomerDashboard({ token }) {
 
   const loadOrders = async () => {
     try {
-      const res = await fetch('http://localhost:8081/api/orders/my', { headers });
+      const res = await fetch('https://ecommerce-platform-pyit.onrender.com/api/orders/my', { headers });
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch { setOrders([]); }
@@ -29,7 +29,7 @@ function CustomerDashboard({ token }) {
 
   const loadProducts = async () => {
     try {
-      const res = await fetch('http://localhost:8081/api/products');
+      const res = await fetch('https://ecommerce-platform-pyit.onrender.com/api/products');
       const data = await res.json();
       setProducts(Array.isArray(data) ? data : []);
     } catch { setProducts([]); }
@@ -42,7 +42,7 @@ function CustomerDashboard({ token }) {
   }, []);
 
   const addToCart = async (productId) => {
-    await fetch('http://localhost:8081/api/cart/add', {
+    await fetch('https://ecommerce-platform-pyit.onrender.com/api/cart/add', {
       method: 'POST', headers,
       body: JSON.stringify({ productId, quantity: 1 })
     });
@@ -52,14 +52,14 @@ function CustomerDashboard({ token }) {
   };
 
   const removeFromCart = async (id) => {
-    await fetch(`http://localhost:8081/api/cart/${id}`, { method: 'DELETE', headers });
+    await fetch(`https://ecommerce-platform-pyit.onrender.com/api/cart/${id}`, { method: 'DELETE', headers });
     await loadCart();
   };
 
   const placeOrder = async () => {
     if (!address) { setMsg('Please enter shipping address'); return; }
     try {
-      const res = await fetch('http://localhost:8081/api/orders/place', {
+      const res = await fetch('https://ecommerce-platform-pyit.onrender.com/api/orders/place', {
         method: 'POST', headers,
         body: JSON.stringify({ shippingAddress: address })
       });
